@@ -239,6 +239,26 @@ def test_observation_is_one_atomic_browser_read(monkeypatch):
     assert cdp.call_args.args[0] == "Runtime.evaluate"
 
 
+def test_browser_release_detaches_without_closing_target(monkeypatch):
+    import jev_ultrafast.browser as browser
+
+    cdp = Mock()
+    monkeypatch.setattr(browser, "cdp", cdp)
+    b = browser.Browser.__new__(browser.Browser)
+    b.target = "target-1"
+    b.session = "session-1"
+    b.release()
+    cdp.assert_called_once_with("Target.detachFromTarget", sessionId="session-1")
+    assert b.target is None and b.session is None
+
+
+def test_agent_release_delegates_to_browser():
+    agent = loop.Agent.__new__(loop.Agent)
+    agent.browser = Mock()
+    agent.release()
+    agent.browser.release.assert_called_once_with()
+
+
 def test_executor_rejects_a_stale_page_before_browser_input(monkeypatch):
     import jev_ultrafast.browser as browser
 
