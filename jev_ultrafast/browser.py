@@ -112,11 +112,17 @@ class Browser:
             return
         try:
             cdp("Target.detachFromTarget", sessionId=self.session)
-        except (RuntimeError, TimeoutError):
+        except TimeoutError:
             pass
-        finally:
-            self.session = None
-            self.target = None
+        except RuntimeError as error:
+            message = str(error).lower()
+            session_gone = "session" in message and any(
+                detail in message for detail in ("closed", "not found", "does not exist", "invalid")
+            )
+            if not session_gone:
+                raise
+        self.session = None
+        self.target = None
 
     def close(self):
         if self.target:
