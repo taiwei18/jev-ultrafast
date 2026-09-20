@@ -108,8 +108,13 @@ class Browser:
 
     def release(self):
         """Detach while leaving the controlled tab open in Chrome."""
-        if self.target:
+        if not self.session:
+            return
+        try:
             cdp("Target.detachFromTarget", sessionId=self.session)
+        except (RuntimeError, TimeoutError):
+            pass
+        finally:
             self.session = None
             self.target = None
 

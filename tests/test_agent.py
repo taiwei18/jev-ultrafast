@@ -250,6 +250,21 @@ def test_browser_release_detaches_without_closing_target(monkeypatch):
     b.release()
     cdp.assert_called_once_with("Target.detachFromTarget", sessionId="session-1")
     assert b.target is None and b.session is None
+    b.release()
+    cdp.assert_called_once_with("Target.detachFromTarget", sessionId="session-1")
+
+
+def test_browser_release_ignores_a_lost_cdp_session(monkeypatch):
+    import jev_ultrafast.browser as browser
+
+    cdp = Mock(side_effect=RuntimeError("Session closed"))
+    monkeypatch.setattr(browser, "cdp", cdp)
+    b = browser.Browser.__new__(browser.Browser)
+    b.target = "target-1"
+    b.session = "session-1"
+    b.release()
+    cdp.assert_called_once_with("Target.detachFromTarget", sessionId="session-1")
+    assert b.target is None and b.session is None
 
 
 def test_agent_release_delegates_to_browser():
